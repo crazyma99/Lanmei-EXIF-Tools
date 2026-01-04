@@ -1,0 +1,15 @@
+{
+    "0th": {
+        "Make": "SONY",
+        "Model": "ILCE-7M4",
+        "Software": "ILCE-7M4 v1.00"
+    },
+    "Exif": {
+        "FNumber": [28, 10],
+        "ExposureTime": [1, 320],
+        "ISOSpeedRatings": 100,
+        "DateTimeOriginal": "2024:01:01 12:00:00",
+        "FocalLength": [500, 10],
+        "LensModel": "FE 24-70mm F2.8 GM"
+    }
+}

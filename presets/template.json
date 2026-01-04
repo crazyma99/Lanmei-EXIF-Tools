@@ -1,0 +1,12 @@
+{
+    "0th": {
+        "Make": "Camera Maker",
+        "Model": "Camera Model"
+    },
+    "Exif": {
+        "FNumber": [28, 10],
+        "ExposureTime": [1, 100],
+        "ISOSpeedRatings": 100,
+        "DateTimeOriginal": "2024:01:01 12:00:00"
+    }
+}

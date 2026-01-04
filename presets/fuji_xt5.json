@@ -1,0 +1,15 @@
+{
+    "0th": {
+        "Make": "FUJIFILM",
+        "Model": "X-T5",
+        "Software": "Digital Camera X-T5 Ver1.00"
+    },
+    "Exif": {
+        "FNumber": [18, 10],
+        "ExposureTime": [1, 160],
+        "ISOSpeedRatings": 200,
+        "DateTimeOriginal": "2024:01:01 12:00:00",
+        "FocalLength": [230, 10],
+        "LensModel": "XF23mmF1.4 R LM WR"
+    }
+}
