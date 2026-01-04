@@ -42,7 +42,9 @@ instance/
 uploads/
 processed/
 frontend_dist/
+static/thumbnails/
 *.log
+
 
 # IDE
 .idea/
