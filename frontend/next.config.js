@@ -3,6 +3,7 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  output: 'export',
   // We don't need rewrites for static export, 
   // but we will serve this from the same origin as Flask so relative paths work.
   async rewrites() {
