@@ -5,7 +5,7 @@ import json
 import sys
 from flask import Flask, render_template, request, jsonify, send_from_directory, send_file
 from werkzeug.utils import secure_filename
-from utils import get_exif_data, remove_exif, modify_exif, create_thumbnail, detect_aigc_from_exif, strip_aigc_metadata
+import utils
 from PIL import Image
 
 def resource_path(relative: str) -> str:
@@ -61,11 +61,11 @@ def upload_file():
         # Generate thumbnail
         thumb_name = f"{file_id}_thumb.{ext}"
         thumb_path = os.path.join(app.config['THUMBNAIL_FOLDER'], thumb_name)
-        create_thumbnail(file_path, thumb_path)
+        utils.create_thumbnail(file_path, thumb_path)
 
         # Get EXIF data
-        exif_data = get_exif_data(file_path)
-        aigc = detect_aigc_from_exif(exif_data)
+        exif_data = utils.get_exif_data(file_path)
+        aigc = utils.detect_aigc_from_exif(exif_data)
         try:
             with Image.open(file_path) as img:
                 width, height = img.size
@@ -137,7 +137,7 @@ def process_file():
     success = False
     
     if action == 'clear':
-        success = remove_exif(input_path, output_path)
+        success = utils.remove_exif(input_path, output_path)
     
     elif action == 'import_preset':
         preset_name = data.get('preset')
@@ -145,14 +145,14 @@ def process_file():
         if os.path.exists(preset_path):
             with open(preset_path, 'r', encoding='utf-8') as f:
                 preset_data = json.load(f)
-            success = modify_exif(input_path, output_path, preset_data=preset_data, convert_to_jpg=convert_to_jpg)
+            success = utils.modify_exif(input_path, output_path, preset_data=preset_data, convert_to_jpg=convert_to_jpg)
         else:
             return jsonify({'error': 'Preset not found'}), 404
             
     elif action == 'import_custom':
         custom_data = data.get('custom_data')
         if custom_data:
-            success = modify_exif(input_path, output_path, preset_data=custom_data, convert_to_jpg=convert_to_jpg)
+            success = utils.modify_exif(input_path, output_path, preset_data=custom_data, convert_to_jpg=convert_to_jpg)
         else:
             return jsonify({'error': 'No custom data provided'}), 400
             
@@ -163,14 +163,14 @@ def process_file():
         if clear_aigc:
             try:
                 # Apply AIGC strip on the processed output
-                strip_ok = strip_aigc_metadata(output_path, output_path)
+                strip_ok = utils.strip_aigc_metadata(output_path, output_path)
                 if not strip_ok:
                     print("Warning: strip_aigc_metadata failed")
             except Exception as e:
                 print(f"strip_aigc_metadata error: {e}")
         # Get new EXIF
-        new_exif = get_exif_data(output_path)
-        new_aigc = detect_aigc_from_exif(new_exif)
+        new_exif = utils.get_exif_data(output_path)
+        new_aigc = utils.detect_aigc_from_exif(new_exif)
         try:
             with Image.open(output_path) as img:
                 n_width, n_height = img.size
