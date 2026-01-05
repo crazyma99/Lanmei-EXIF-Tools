@@ -238,6 +238,10 @@ def download_batch():
     
     return send_file(zip_path, as_attachment=True)
 
+@app.route('/static/thumbnails/<path:filename>')
+def serve_thumbnails(filename):
+    return send_from_directory(app.config['THUMBNAIL_FOLDER'], filename)
+
 @app.route('/api')
 def api_root():
     return jsonify({'status': 'online', 'message': 'Exif-Rm-Formater API Server', 'version': '1.0.0'}), 200
@@ -249,6 +253,10 @@ def serve_ui_index():
     if os.path.exists(index_path):
         return send_file(index_path)
     return jsonify({'message': 'UI not built. Please use GitHub Releases version or build frontend.'}), 200
+
+@app.route('/_next/<path:path>')
+def serve_nextjs_assets(path):
+    return send_from_directory(os.path.join(app.config['WEB_FOLDER'], '_next'), path)
 
 @app.route('/app/<path:filename>')
 def serve_ui_assets(filename):
