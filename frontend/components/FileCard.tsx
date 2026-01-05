@@ -9,7 +9,7 @@ interface FileCardProps {
 }
 
 export default function FileCard({ file, isProcessed = false, isSelected = false, onToggleSelect }: FileCardProps) {
-  const apiBase = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:5000';
+  const apiBase = (typeof window !== 'undefined' && (window as any).env?.API_BASE) || process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:5000';
   const [showModal, setShowModal] = (typeof window !== 'undefined') ? (require('react').useState as typeof import('react').useState<boolean>)(false) : [false, () => {}];
   const formatValue = (val: unknown): string => {
     if (val === null || val === undefined) return '';

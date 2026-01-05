@@ -3,6 +3,7 @@ import uuid
 import zipfile
 import json
 import sys
+import argparse
 from flask import Flask, render_template, request, jsonify, send_from_directory, send_file
 from werkzeug.utils import secure_filename
 import utils
@@ -13,9 +14,19 @@ def resource_path(relative: str) -> str:
     return os.path.join(base_path, relative)
 
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = os.path.abspath('uploads')
-app.config['PROCESSED_FOLDER'] = os.path.abspath('processed')
-app.config['THUMBNAIL_FOLDER'] = os.path.abspath('static/thumbnails')
+
+# Parse command line arguments
+parser = argparse.ArgumentParser()
+parser.add_argument('--port', type=int, default=5000)
+parser.add_argument('--data-dir', type=str, default='.')
+args, unknown = parser.parse_known_args()
+
+# Set base directory for data
+BASE_DIR = os.path.abspath(args.data_dir)
+
+app.config['UPLOAD_FOLDER'] = os.path.join(BASE_DIR, 'uploads')
+app.config['PROCESSED_FOLDER'] = os.path.join(BASE_DIR, 'processed')
+app.config['THUMBNAIL_FOLDER'] = os.path.join(BASE_DIR, 'static', 'thumbnails')
 app.config['PRESETS_FOLDER'] = resource_path('presets')
 app.config['WEB_FOLDER'] = resource_path('web')
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB max upload
@@ -267,9 +278,4 @@ def serve_ui_assets(filename):
     return send_from_directory(app.config['WEB_FOLDER'], filename)
 
 if __name__ == '__main__':
-    try:
-        import webbrowser
-        webbrowser.open('http://127.0.0.1:5000/app')
-    except:
-        pass
-    app.run(debug=False, port=5000)
+    app.run(debug=False, port=args.port)

@@ -64,3 +64,11 @@ frontend/out/
 frontend/build/
 frontend/.vercel/
 frontend/*.tsbuildinfo
+
+# Electron & Build
+node_modules/
+dist_v2/
+dist_old_temp/
+backend_dist/
+*.spec
+release/

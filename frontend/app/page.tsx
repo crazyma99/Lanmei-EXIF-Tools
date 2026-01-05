@@ -14,7 +14,7 @@ export default function Home() {
   const [convertToJpg, setConvertToJpg] = useState(false);
   const [clearAIGC, setClearAIGC] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const apiBase = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:5000';
+  const apiBase = (typeof window !== 'undefined' && (window as any).env?.API_BASE) || process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:5000';
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
