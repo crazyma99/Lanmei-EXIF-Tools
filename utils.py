@@ -98,6 +98,7 @@ def remove_exif(image_path, output_path):
     Attempts to be lossless for JPEG.
     """
     try:
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
         # Check if JPEG
         is_jpeg = False
         try:
@@ -142,6 +143,7 @@ def modify_exif(image_path, output_path, exif_json_path=None, preset_data=None, 
     Attempts to be lossless for JPEG unless convert_to_jpg is True.
     """
     try:
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
         if exif_json_path:
             with open(exif_json_path, 'r', encoding='utf-8') as f:
                 target_exif = json.load(f)
@@ -233,6 +235,9 @@ def modify_exif(image_path, output_path, exif_json_path=None, preset_data=None, 
 
 def create_thumbnail(image_path, output_path, size=(200, 200)):
     try:
+        # Ensure directory exists
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        
         with Image.open(image_path) as img:
             img.thumbnail(size)
             img.save(output_path)

@@ -55,6 +55,10 @@ def upload_file():
         file_id = str(uuid.uuid4())
         ext = filename.rsplit('.', 1)[1].lower()
         save_name = f"{file_id}.{ext}"
+        
+        # Ensure upload directory exists
+        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+        
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], save_name)
         file.save(file_path)
 
