@@ -226,21 +226,6 @@ JSON 结构基于 EXIF 标准的 IFD (Image File Directory) 分组。
   - 处理后卡片底部有“下载”按钮；模态窗内也提供“下载此图片”按钮
 - 批量下载：勾选处理结果后进行 ZIP 打包下载
 
-## ✅ 测试与质量保证
-
-- 后端测试：
-  ```bash
-  # 运行全部后端测试
-  python tests/test_app.py
-  python tests/test_metadata.py
-  ```
-- 前端检查：
-  ```bash
-  cd frontend
-  npm run lint
-  npx tsc --noEmit
-  ```
-
 ## ⚙️ 运行与部署提示
 
 - 默认最大上传体积为 100MB（Flask `MAX_CONTENT_LENGTH`），适于大图处理
