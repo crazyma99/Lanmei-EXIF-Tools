@@ -161,7 +161,7 @@ export default function FileCard({ file, isProcessed = false, isSelected = false
           <div className="relative bg-white dark:bg-neutral-900 rounded-xl shadow-xl w-[90vw] max-w-[900px] max-h-[80vh] overflow-hidden border border-gray-200 dark:border-neutral-700" onClick={(e) => e.stopPropagation()}>
             <div className="px-4 py-3 border-b border-gray-200 dark:border-neutral-700 flex items-center justify-between">
               <div className="text-sm font-semibold text-gray-800 dark:text-gray-100">
-                {file.filename} {file.format ? `· ${file.format}` : ''} {file.width && file.height ? `· ${file.width}×${file.height}` : ''}
+                {file.filename} {('format' in file && (file as any).format ? `· ${(file as any).format}` : '')} {('width' in file && 'height' in file && (file as any).width && (file as any).height ? `· ${(file as any).width}×${(file as any).height}` : '')}
               </div>
               <button className="text-xs px-2 py-1 rounded bg-gray-100 dark:bg-neutral-800 hover:bg-gray-200 dark:hover:bg-neutral-700" onClick={() => setShowModal(false)}>关闭</button>
             </div>
