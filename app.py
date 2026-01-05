@@ -12,15 +12,6 @@ def resource_path(relative: str) -> str:
     base_path = getattr(sys, '_MEIPASS', os.path.abspath('.'))
     return os.path.join(base_path, relative)
 
-def app_version() -> str:
-    try:
-        vpath = resource_path('version.txt')
-        if os.path.exists(vpath):
-            with open(vpath, 'r', encoding='ascii') as f:
-                return f.read().strip()
-    except:
-        pass
-    return 'dev'
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = os.path.abspath('uploads')
 app.config['PROCESSED_FOLDER'] = os.path.abspath('processed')
@@ -257,7 +248,7 @@ def serve_thumbnails(filename):
 
 @app.route('/api')
 def api_root():
-    return jsonify({'status': 'online', 'message': 'Exif-Rm-Formater API Server', 'version': app_version()}), 200
+    return jsonify({'status': 'online', 'message': 'Exif-Rm-Formater API Server', 'version': '1.0.0'}), 200
 
 @app.route('/')
 @app.route('/app')

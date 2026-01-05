@@ -99,11 +99,11 @@ export default function FileCard({ file, isProcessed = false, isSelected = false
       onClick={() => setShowModal(true)}
     >
       <div className="h-32 bg-gray-100 dark:bg-neutral-900 relative">
-        {'aigc' in file && typeof (file as any).aigc === 'boolean' && (
+        {typeof file.aigc === 'boolean' && (
           <div className={`absolute top-2 right-2 text-[10px] px-2 py-0.5 rounded ${
-            (file as any).aigc ? 'bg-red-500 text-white' : 'bg-green-500 text-white'
+            file.aigc ? 'bg-red-500 text-white' : 'bg-green-500 text-white'
           }`}>
-            {(file as any).aigc ? ((file as any).aigc_detail?.source ? `AIGC-${(file as any).aigc_detail.source}` : 'AIGC') : '非AIGC'}
+            {file.aigc ? (file.aigc_detail?.source ? `AIGC-${file.aigc_detail.source}` : 'AIGC') : '非AIGC'}
           </div>
         )}
         <button 
@@ -161,7 +161,7 @@ export default function FileCard({ file, isProcessed = false, isSelected = false
           <div className="relative bg-white dark:bg-neutral-900 rounded-xl shadow-xl w-[90vw] max-w-[900px] max-h-[80vh] overflow-hidden border border-gray-200 dark:border-neutral-700" onClick={(e) => e.stopPropagation()}>
             <div className="px-4 py-3 border-b border-gray-200 dark:border-neutral-700 flex items-center justify-between">
               <div className="text-sm font-semibold text-gray-800 dark:text-gray-100">
-                {file.filename} {('format' in file && (file as any).format ? `· ${(file as any).format}` : '')} {('width' in file && 'height' in file && (file as any).width && (file as any).height ? `· ${(file as any).width}×${(file as any).height}` : '')}
+                {file.filename} {file.format ? `· ${file.format}` : ''} {file.width && file.height ? `· ${file.width}×${file.height}` : ''}
               </div>
               <button className="text-xs px-2 py-1 rounded bg-gray-100 dark:bg-neutral-800 hover:bg-gray-200 dark:hover:bg-neutral-700" onClick={() => setShowModal(false)}>关闭</button>
             </div>
@@ -171,8 +171,8 @@ export default function FileCard({ file, isProcessed = false, isSelected = false
                 <div className="text-xs text-gray-600 dark:text-gray-400">文件名: {file.filename}</div>
                 {file.format && <div className="text-xs text-gray-600 dark:text-gray-400">格式: {file.format}</div>}
                 {file.width && file.height && <div className="text-xs text-gray-600 dark:text-gray-400">分辨率: {file.width} × {file.height}</div>}
-                {'aigc' in file && typeof (file as any).aigc === 'boolean' && (
-                  <div className="text-xs text-gray-600 dark:text-gray-400">AIGC: {(file as any).aigc ? `是${(file as any).aigc_detail?.source ? `（${(file as any).aigc_detail.source}）` : ''}` : '否'}</div>
+                {typeof file.aigc === 'boolean' && (
+                  <div className="text-xs text-gray-600 dark:text-gray-400">AIGC: {file.aigc ? `是${file.aigc_detail?.source ? `（${file.aigc_detail.source}）` : ''}` : '否'}</div>
                 )}
                 {isProcessed && (
                   <a 

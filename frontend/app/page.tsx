@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FileData } from './types';
 import FileCard from '@/components/FileCard';
@@ -12,23 +12,21 @@ export default function Home() {
   const [showCustomJson, setShowCustomJson] = useState(false);
   const [customJsonText, setCustomJsonText] = useState('');
   const [convertToJpg, setConvertToJpg] = useState(false);
+  const [clearAIGC, setClearAIGC] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const apiBase = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:5000';
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
+  const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(true);
-  }, []);
+  };
 
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
+  const handleDragLeave = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-  }, []);
+  };
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    handleFiles(e.dataTransfer.files);
-  }, []);
+  
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -36,16 +34,12 @@ export default function Home() {
     }
   };
 
-  const handleFiles = (files: FileList) => {
-    Array.from(files).forEach(uploadFile);
-  };
-
   const uploadFile = async (file: File) => {
     const formData = new FormData();
     formData.append('file', file);
 
     try {
-      const res = await fetch('/upload', {
+      const res = await fetch(`${apiBase}/upload`, {
         method: 'POST',
         body: formData,
       });
@@ -53,28 +47,39 @@ export default function Home() {
       if (data.error) {
         alert(data.error);
       } else {
-        setUploadedFiles(prev => [data, ...prev]);
+        setUploadedFiles(prev => [data as FileData, ...prev]);
       }
     } catch (err) {
       console.error(err);
       alert('上传失败');
     }
   };
+ 
+  const handleFiles = (files: FileList) => {
+    Array.from(files).forEach(uploadFile);
+  };
+ 
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    handleFiles(e.dataTransfer.files);
+  };
 
-  const processAll = async (action: string, extraData: any = {}) => {
+  const processAll = async (action: string, extraData: Record<string, unknown> = {}) => {
     if (uploadedFiles.length === 0) {
       alert('请先上传照片');
       return;
     }
 
     const promises = uploadedFiles.map(file => {
-      return fetch('/process', {
+      return fetch(`${apiBase}/process`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: file.id,
           action: action,
           convert_to_jpg: convertToJpg,
+          clear_aigc: clearAIGC,
           ...extraData
         })
       })
@@ -84,7 +89,12 @@ export default function Home() {
           return {
             ...file,
             exif: res.exif,
-            filename: res.new_filename || file.filename
+            filename: res.new_filename || file.filename,
+            aigc: res.aigc ?? file.aigc,
+            aigc_detail: res.aigc_detail ?? file.aigc_detail,
+            width: res.width ?? file.width,
+            height: res.height ?? file.height,
+            format: res.format ?? file.format
           } as FileData;
         }
         return null;
@@ -110,8 +120,9 @@ export default function Home() {
       const jsonData = JSON.parse(customJsonText);
       processAll('import_custom', { custom_data: jsonData });
       setShowCustomJson(false);
-    } catch (e: any) {
-      alert('JSON 格式错误: ' + e.message);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      alert('JSON 格式错误: ' + msg);
     }
   };
 
@@ -124,7 +135,7 @@ export default function Home() {
     const ids = selectedIds.size > 0 ? Array.from(selectedIds) : processedFiles.map(f => f.id);
     
     try {
-      const res = await fetch('/download_batch', {
+      const res = await fetch(`${apiBase}/download_batch`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ids: ids })
@@ -153,13 +164,7 @@ export default function Home() {
     setSelectedIds(newSelected);
   };
 
-  const handleSelectAll = () => {
-    if (selectedIds.size === processedFiles.length && processedFiles.length > 0) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(processedFiles.map(f => f.id)));
-    }
-  };
+  
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-neutral-950 flex flex-col font-sans text-slate-800 dark:text-slate-200 transition-colors duration-300">
@@ -184,6 +189,15 @@ export default function Home() {
                 className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
               />
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300">转为JPG格式</span>
+            </label>
+            <label className="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-neutral-800 rounded-lg border border-gray-200 dark:border-neutral-700 cursor-pointer select-none transition-colors hover:bg-gray-100 dark:hover:bg-neutral-700">
+              <input 
+                type="checkbox" 
+                checked={clearAIGC}
+                onChange={(e) => setClearAIGC(e.target.checked)}
+                className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+              />
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">清除AIGC标识</span>
             </label>
             <div className="h-6 w-px bg-gray-300 dark:bg-neutral-700 mx-1"></div>
             <button 
