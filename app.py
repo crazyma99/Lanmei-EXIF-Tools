@@ -25,8 +25,8 @@ args, unknown = parser.parse_known_args()
 BASE_DIR = os.path.abspath(args.data_dir)
 
 app.config['UPLOAD_FOLDER'] = os.path.join(BASE_DIR, 'uploads')
-app.config['PROCESSED_FOLDER'] = os.path.join(BASE_DIR, 'processed')
-app.config['THUMBNAIL_FOLDER'] = os.path.join(BASE_DIR, 'static', 'thumbnails')
+app.config['PROCESSED_FOLDER'] = os.path.join(BASE_DIR, 'outputs')
+app.config['THUMBNAIL_FOLDER'] = os.path.join(BASE_DIR, 'uploads', 'thumbnails')
 app.config['PRESETS_FOLDER'] = resource_path('presets')
 app.config['WEB_FOLDER'] = resource_path('web')
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB max upload
