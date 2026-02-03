@@ -18,7 +18,7 @@ def start_dev():
 
     # 2. 启动 Frontend
     print("启动前端 (port 3000)...")
-    frontend_cwd = os.path.join(os.getcwd(), "frontend", "app")
+    frontend_cwd = os.path.join(os.getcwd(), "frontend")
     # Windows 下 npm 需要用 shell=True 或通过 cmd /c 执行
     npm_cmd = "npm.cmd" if os.name == 'nt' else "npm"
     frontend = subprocess.Popen(

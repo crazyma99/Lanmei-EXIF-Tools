@@ -56,14 +56,14 @@ frontend_dist/
 Thumbs.db
 Desktop.ini
 
-# Frontend (Nested Next.js App)
-frontend/app/node_modules/
-frontend/app/.next/
-frontend/app/out/
-frontend/app/build/
-frontend/app/.vercel/
-frontend/app/*.tsbuildinfo
-frontend/app/next-env.d.ts
+# Frontend (Next.js App)
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/.vercel/
+frontend/*.tsbuildinfo
+frontend/next-env.d.ts
 
 # Electron & Build
 node_modules/
