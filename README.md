@@ -1,58 +1,50 @@
 # 蓝梅 EXIF 工具 (Lanmei EXIF Tool)
 
 这是一个基于 **Python Flask** (后端) 和 **Next.js** (前端) 构建的现代化 EXIF 信息处理工具。
-旨在为摄影师、设计师和隐私关注者提供简单、高效的 EXIF 查看、清除和修改功能。
+旨在为摄影师、设计师和隐私关注者提供简单、高效的 EXIF 查看、清除、修改以及 AIGC 去痕功能。
 
 ## ✨ 功能特点
 
 *   **🛡️ 隐私保护 (EXIF 清除)**：一键移除照片中的所有 EXIF 元数据（如拍摄位置、相机参数等），保护您的隐私。
-*   **🖼️ 格式转换**：支持在处理时将 HEIC/PNG 等格式自动转换为兼容性更好的 JPG 格式。
-*   **📂 批量处理**：支持拖放上传和批量文件选择，一次性处理多张图片。
-*   **📝 EXIF 修改/注入**：
+*   **🧹 AIGC 深度去痕 (Deep Clean)**：专为 AIGC 生成图片设计，通过微旋转、重采样、像素位移、色彩微调及噪点注入等组合策略，有效对抗平台检测。
+*   **🖼️ 格式转换**：支持在处理时将 HEIC/PNG/WebP 等格式自动转换为兼容性更好的 JPG 格式。
+*   ** EXIF 修改/注入**：
     *   支持导入 JSON 格式的自定义 EXIF 数据。
-    *   内置常用相机（如 Sony A7M4, Fujifilm X-T5）的预设模板。
-*   **👀 实时预览**：上传即刻查看照片详细信息，处理前后对比。
-*   **💾 便捷下载**：支持单张下载处理后的图片，或一键打包下载所有文件 (ZIP)。
-*   **🎨 现代化界面**：基于 Next.js 16 和 Tailwind CSS 4 构建的响应式流体界面。
-*   **🤖 AIGC 检测与显示**：自动解析 PNG Info、XMP、EXIF 中的 AIGC 线索（如 Stable Diffusion 的 parameters、prompt、workflow 等），前端标注 AIGC 并展示来源。
-*   **🧹 AIGC 隐式标识清除**：新增“清除 AIGC 标识”复选框，处理时移除所有隐式 AIGC 元数据（PNG parameters/prompt/workflow、EXIF UserComment、含 AIGC 关键词的 ImageDescription/Software、XMP 段）。
-*   **🧩 无损处理策略**：尽可能保持画质无损：JPEG 段级更新 EXIF 并删除 XMP APP1 段、PNG 使用 optimize 保存、WebP 使用 lossless 保存。
-*   **🪟 详情模态窗**：处理前/处理后卡片支持点击打开模态窗，展示分辨率、图片格式、全部元数据信息与 AIGC 专区；处理后模态窗内提供“下载此图片”按钮。
+    *   内置常用相机（如 Sony A7M4, Fujifilm X-T5, Hasselblad X2D）的预设模板。
+*   **👀 实时预览**：
+    *   上传即刻查看照片详细信息，支持大图查看。
+    *   处理前后对比，直观感受画质与元数据变化。
+*   **📉 胶片颗粒模拟**：内置自适应胶片颗粒（Noise/Grain）添加功能，支持强度调节，增加照片质感。
+*   **🤖 AIGC 智能检测**：自动解析 PNG Info (Parameters, Prompt, Workflow)、XMP、EXIF 中的 AIGC 线索，识别并标注生成来源。
+*   **💾 批量处理与下载**：支持多文件上传、批量处理，并提供一键打包 (ZIP) 下载功能。
 
 ## 🛠️ 技术栈
 
 **前端 (Frontend)**
-*   **Framework**: Next.js 16.1 (App Router)
-*   **Library**: React 19
+*   **Framework**: Next.js (App Router)
+*   **Library**: React, Radix UI
 *   **Styling**: Tailwind CSS 4
-*   **Animation**: Framer Motion
-*   **Icons**: Lucide React
+*   **Icons**: Radix UI Icons
 
 **后端 (Backend)**
-*   **Framework**: Flask 3.1
-*   **Image Processing**: Pillow (PIL) 11.0
+*   **Framework**: Flask
+*   **Image Processing**: Pillow (PIL)
 *   **EXIF Handling**: piexif
 
 ## 🚀 快速开始
 
-本项目提供了一键启动脚本，无需分别运行前后端。
-
 ### 1. 环境准备
 
-*   **Python**: 3.8+
-*   **Node.js**: 18.0+ (推荐 20 LTS)
+*   **Python**: 3.9+
+*   **Node.js**: 18.0+
 
 ### 2. 安装依赖
 
 **后端依赖**
 ```bash
-# Windows
-python -m venv venv
-.\venv\Scripts\activate
-
-# macOS/Linux
+# 创建虚拟环境
 python3 -m venv venv
-source venv/bin/activate
+source venv/bin/activate  # Windows: venv\Scripts\activate
 
 # 安装依赖
 pip install -r requirements.txt
@@ -62,111 +54,47 @@ pip install -r requirements.txt
 ```bash
 cd frontend
 npm install
-# 返回根目录
-cd ..
 ```
 
 ### 3. 运行项目
 
-在项目根目录下运行启动脚本，它会自动启动 Flask API 和 Next.js 开发服务器，并自动打开浏览器。
-
+**启动后端服务**
 ```bash
-# 确保虚拟环境已激活
-python start_dev.py
+python app.py
+# 服务默认运行在 http://127.0.0.1:5000
 ```
 
-*   **应用地址**: [http://localhost:3000](http://localhost:3000) (会自动打开)
-*   **API 地址**: [http://localhost:5000](http://localhost:5000)
-*   **环境变量**:
-    *   前端可通过 `NEXT_PUBLIC_API_BASE` 指定后端地址（默认 `http://localhost:5000`），以绕过前端服务器的上传体积限制并避免跨源问题。
-
-## 📂 目录结构
-
-```
-exif-rm-formater/
-├── app.py              # Flask 后端主程序 (API 服务)
-├── utils.py            # 图片处理与 EXIF 操作核心逻辑
-├── start_dev.py        # 开发环境一键启动脚本 (Python + Node 并行)
-├── requirements.txt    # Python 依赖清单
-├── frontend/           # Next.js 前端项目源码
-│   ├── app/            # 页面与路由 (App Router)
-│   ├── components/     # React UI 组件
-│   └── package.json    # 前端依赖配置
-├── uploads/            # 临时存储：上传的原始文件 (自动清理)
-└── processed/          # 临时存储：处理后的文件 (自动清理)
+**启动前端开发服务器**
+```bash
+cd frontend
+npm run dev
+# 前端默认运行在 http://localhost:3000
 ```
 
-## 📝 API 文档
+## 📂 目录架构
 
-*   `POST /upload`: 上传图片
-*   `POST /process`: 处理图片 (清除/修改/转换)
-*   `POST /download_batch`: 打包下载
-*   `GET /download/<file_id>`: 下载单个文件
-
-### /upload 响应字段
-```json
-{
-  "id": "文件ID",
-  "filename": "原文件名",
-  "thumbnail_url": "/static/thumbnails/xxx",
-  "exif": { ... },                    // 解析后的 EXIF/PNG Info/XMP
-  "aigc": true,                       // 是否检测为 AIGC
-  "aigc_detail": {                    // AIGC 详情
-    "is_aigc": true,
-    "matched": "stable diffusion",
-    "source": "PNG parameters"
-  },
-  "width": 2048,                      // 分辨率（像素）
-  "height": 1536,
-  "format": "JPEG"                    // 图片格式
-}
+```
+Lanmei-EXIF-Tools/
+├── app.py              # Flask 后端主入口 (API & 静态资源服务)
+├── utils.py            # 核心图像处理逻辑 (EXIF, Deep Clean, Grain)
+├── requirements.txt    # Python 依赖列表
+├── presets/            # EXIF 预设文件 (.json)
+│   ├── sony_a7m4.json
+│   ├── fuji_xt5.json
+│   └── ...
+├── frontend/           # Next.js 前端项目
+│   ├── app/            # App Router 页面与布局
+│   ├── components/     # React 组件 (FileCard, UI等)
+│   └── ...
+├── uploads/            # [自动生成] 图片上传临时目录
+└── outputs/            # [自动生成] 处理结果输出目录
 ```
 
-### /process 请求字段
-```json
-{
-  "id": "文件ID",
-  "action": "clear | import_preset | import_custom",
-  "convert_to_jpg": false,
-  "clear_aigc": true,                 // 勾选“清除 AIGC 标识”时传 true
-  "preset": "sony_a7m4",              // action=import_preset 时
-  "custom_data": { ... }              // action=import_custom 时
-}
-```
+## 📚 API 文档
 
-### /process 响应字段
-```json
-{
-  "success": true,
-  "exif": { ... },                    // 处理后 EXIF/元数据
-  "new_filename": "xxx.jpg",          // 转为 JPG 时返回新文件名
-  "aigc": false,
-  "aigc_detail": {
-    "is_aigc": false,
-    "matched": null,
-    "source": null
-  },
-  "width": 2048,
-  "height": 1536,
-  "format": "JPEG"
-}
-```
+### 自定义 EXIF JSON 格式示例
 
-## 🔧 自定义 EXIF JSON 格式
-
-在使用“自定义导入”功能时，您需要提供一个符合以下格式的 JSON 字符串。
-JSON 结构基于 EXIF 标准的 IFD (Image File Directory) 分组。
-
-### 结构说明
-
-*   **根对象**: 包含 `0th`, `Exif`, `GPS` 等顶级键。
-*   **标签名**: 使用标准的 EXIF 英文标签名 (如 `Make`, `FNumber`)。
-*   **数据类型**:
-    *   **字符串 (String)**: 直接使用字符串，如 `"SONY"`。
-    *   **数值 (Integer)**: 直接使用数字，如 `100`。
-    *   **分数/比率 (Rational)**: 使用包含两个数字的数组 `[分子, 分母]`，如 `[1, 125]` 表示 1/125 秒。
-
-### 示例代码
+在进行“自定义修改”时，请参考以下 JSON 结构：
 
 ```json
 {
@@ -193,44 +121,26 @@ JSON 结构基于 EXIF 标准的 IFD (Image File Directory) 分组。
 }
 ```
 
-> **注意**:
-> *   `FNumber`: `[28, 10]` = 2.8 光圈
-> *   `ExposureTime`: `[1, 500]` = 1/500 秒快门
-> *   `FocalLength`: `[500, 10]` = 50mm 焦距
+> **参数说明**:
+> *   `FNumber`: `[28, 10]` 表示光圈 f/2.8 (28/10)
+> *   `ExposureTime`: `[1, 500]` 表示快门 1/500 秒
+> *   `FocalLength`: `[500, 10]` 表示焦距 50mm
 
-## 🧠 AIGC 检测与清除策略
+## 📖 使用指南
 
-- 检测来源：
-  - EXIF：UserComment、ImageDescription、Software
-  - PNG Info：parameters、prompt、workflow、sd-metadata、Comment、Description、Software
-  - XMP：递归搜索文本字段
-- 关键词示例：`stable diffusion`、`midjourney`、`aigc`、`generated by`、`flux`、`controlnet`、`lora`、以及中文 `ai生成` 等
-- 清除策略（启用“清除 AIGC 标识”时）：
-  - EXIF：移除 UserComment；如 ImageDescription/Software 含 AIGC 关键词则删除
-  - PNG：剔除 parameters/prompt/workflow/sd-metadata/Comment/Description/Software
-  - JPEG：段级删除 XMP 的 APP1 段，并使用 `piexif.insert` 无损更新 EXIF
-  - WebP：使用 `lossless` 参数保存
+1.  **上传图片**：直接拖拽或点击上传区域选择图片（支持 JPG/PNG/WebP/TIFF）。
+2.  **选择操作**：
+    *   **深度去痕 (AIGC)**：勾选此项可启用对抗性处理算法，去除 AIGC 特征。
+    *   **选择预设**：下拉选择相机型号预设，或选择“无预设 (仅清除/去痕)”。
+3.  **开始处理**：点击“开始处理”按钮，系统将自动执行清除、修改或去痕操作。
+4.  **预览与下载**：
+    *   点击处理结果卡片的“详情”按钮，可在模态窗中查看大图和详细元数据。
+    *   点击“下载”按钮保存单张图片，或使用底部栏的“批量下载”功能。
 
-## 🪟 前端界面使用指南
+## ⚠️ 注意事项
 
-- 上传区域：拖拽或选择图片文件，支持 PNG/JPG/JPEG/TIFF/WebP
-- 控件区：
-  - 转为 JPG 格式（convert_to_jpg）
-  - 清除所有 EXIF（action=clear）
-  - 导入预设（action=import_preset）
-  - 导入自定义 JSON（action=import_custom）
-  - 清除 AIGC 标识（clear_aigc）
-- 卡片：
-  - 待处理卡片：点击打开详情模态窗
-  - 处理后卡片：左上角小方框进行选中；点击“详情”按钮打开模态窗
-  - 处理后卡片底部有“下载”按钮；模态窗内也提供“下载此图片”按钮
-- 批量下载：勾选处理结果后进行 ZIP 打包下载
-
-## ⚙️ 运行与部署提示
-
-- 默认最大上传体积为 100MB（Flask `MAX_CONTENT_LENGTH`），适于大图处理
-- 已配置 CORS，前端使用绝对后端地址（`NEXT_PUBLIC_API_BASE`）进行跨源通信
-- 本地运行时不会上传图片到外网，所有处理均在本机完成
+*   **Deep Clean (深度去痕)** 会对图片像素进行微小的破坏性修改（如微旋转、噪点），这是为了对抗检测算法所必需的，可能会轻微影响画质。
+*   本地运行模式下，所有文件仅存储在您的计算机上，不会上传至任何云端服务器。
 
 ---
 License: MIT

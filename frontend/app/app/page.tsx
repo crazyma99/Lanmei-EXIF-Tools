@@ -24,15 +24,17 @@ import {
   EraserIcon, 
   ImageIcon, 
   FileTextIcon,
-  MixerHorizontalIcon
+  MixerHorizontalIcon,
+  EyeOpenIcon
 } from '@radix-ui/react-icons';
+import GrainPreview from '@/components/GrainPreview';
 
 export default function Home() {
   const [uploadedFiles, setUploadedFiles] = useState<FileData[]>([]);
   const [processedFiles, setProcessedFiles] = useState<FileData[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [convertToJpg, setConvertToJpg] = useState(false);
-  const [clearAIGC, setClearAIGC] = useState(false);
+  const [deepClean, setDeepClean] = useState(false);
   const [addNoise, setAddNoise] = useState(false);
   const [noiseIntensity, setNoiseIntensity] = useState(10);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -115,7 +117,7 @@ export default function Home() {
           id: file.id,
           action: action,
           convert_to_jpg: convertToJpg,
-          clear_aigc: clearAIGC,
+          deep_clean: deepClean,
           add_noise: addNoise,
           noise_intensity: noiseIntensity,
           ...extraData
@@ -162,6 +164,10 @@ export default function Home() {
         const msg = e instanceof Error ? e.message : String(e);
         alert('JSON 格式错误: ' + msg);
       }
+    } else if (selectedPreset === 'none') {
+      // Just clear/process without preset
+      // If deepClean is true, it will be handled by processAll -> backend
+      processAll('clear'); 
     } else {
       processAll('import_preset', { preset: selectedPreset });
     }
@@ -240,11 +246,11 @@ export default function Home() {
             
             <div className="flex items-center space-x-2 px-3 py-2 bg-secondary/50 rounded-lg border border-border">
               <Checkbox 
-                id="clear-aigc" 
-                checked={clearAIGC}
-                onCheckedChange={(checked) => setClearAIGC(checked as boolean)}
+                id="deep-clean" 
+                checked={deepClean}
+                onCheckedChange={(checked) => setDeepClean(checked as boolean)}
               />
-              <Label htmlFor="clear-aigc">清除AIGC标识</Label>
+              <Label htmlFor="deep-clean" className="cursor-help" title="依靠高阶干扰算法的AI去痕">深度去痕 (AIGC)</Label>
             </div>
 
             <div className="flex items-center gap-2 px-3 py-2 bg-secondary/50 rounded-lg border border-border">
@@ -275,22 +281,13 @@ export default function Home() {
               )}
             </div>
 
-            <div className="h-6 w-px bg-border mx-1"></div>
-            
-            <Button 
-              variant="destructive"
-              onClick={() => processAll('clear')}
-            >
-              <EraserIcon className="mr-2 h-4 w-4" />
-              清除所有EXIF
-            </Button>
-            
             <div className="flex items-center gap-2">
               <Select value={selectedPreset} onValueChange={setSelectedPreset}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-[200px]">
                   <SelectValue placeholder="选择预设" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="none">无预设 (仅清除/去痕)</SelectItem>
                   <SelectItem value="sony_a7m4">Sony A7M4 预设</SelectItem>
                   <SelectItem value="fuji_xt5">Fuji X-T5 预设</SelectItem>
                   <SelectItem value="hasselblad_x2d">Hasselblad X2D 预设</SelectItem>
@@ -300,10 +297,12 @@ export default function Home() {
 
               <Button 
                 variant="default"
+                size="lg"
+                className="px-6 font-bold"
                 onClick={handleApplyPreset}
               >
-                <MagicWandIcon className="mr-2 h-4 w-4" />
-                应用预设
+                {deepClean ? <MagicWandIcon className="mr-2 h-4 w-4" /> : <EraserIcon className="mr-2 h-4 w-4" />}
+                {deepClean ? '深度去痕并应用' : '开始处理'}
               </Button>
             </div>
           </div>
@@ -325,6 +324,49 @@ export default function Home() {
             </motion.div>
           )}
         </div>
+
+        <AnimatePresence>
+          {addNoise && uploadedFiles.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, height: 0, marginTop: 0 }}
+              animate={{ opacity: 1, height: 'auto', marginTop: 24 }}
+              exit={{ opacity: 0, height: 0, marginTop: 0 }}
+              className="bg-card px-6 py-4 rounded-xl shadow-sm border border-border overflow-hidden"
+            >
+               <div className="flex items-center gap-2 mb-4 text-sm font-semibold text-foreground border-b border-border pb-2">
+                 <EyeOpenIcon className="w-4 h-4" />
+                 颗粒效果预览 (强度: {noiseIntensity})
+                 <span className="text-xs text-muted-foreground font-normal ml-2">
+                   * 预览仅供参考，实际效果以处理结果为准
+                 </span>
+               </div>
+               <div className="flex gap-4 overflow-x-auto pb-2">
+                  <div className="relative group shrink-0">
+                    <GrainPreview
+                      imageUrl={`${apiBase}${uploadedFiles[0].thumbnail_url}`}
+                      intensity={noiseIntensity}
+                      className="h-[200px] w-auto rounded-md border border-border bg-secondary/30"
+                    />
+                    <div className="absolute bottom-2 left-2 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded backdrop-blur-sm">
+                      预览: {uploadedFiles[0].filename}
+                    </div>
+                  </div>
+                  <div className="relative group shrink-0 opacity-50 hover:opacity-100 transition-opacity">
+                     {/* Use img tag for original preview comparison */}
+                     {/* eslint-disable-next-line @next/next/no-img-element */}
+                     <img 
+                       src={`${apiBase}${uploadedFiles[0].thumbnail_url}`} 
+                       className="h-[200px] w-auto rounded-md border border-border bg-secondary/30"
+                       alt="Original"
+                     />
+                     <div className="absolute bottom-2 left-2 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded backdrop-blur-sm">
+                       原图
+                     </div>
+                  </div>
+               </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Workspace */}
         <div className="flex flex-col lg:flex-row gap-6 flex-1 min-h-[600px]">

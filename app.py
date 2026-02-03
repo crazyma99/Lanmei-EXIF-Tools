@@ -153,23 +153,31 @@ def process_file():
 
     success = False
     
-    if action == 'clear':
+    if action == 'deep_clean' or (action == 'clear' and data.get('deep_clean')):
+        # Deep clean includes noise, rotation, etc.
+        # Use the intensity from slider or default
+        success = utils.deep_clean_image(input_path, output_path, intensity=noise_intensity)
+
+    elif action == 'clear':
         success = utils.remove_exif(input_path, output_path, add_noise=add_noise, noise_intensity=noise_intensity)
-    
+
     elif action == 'import_preset':
         preset_name = data.get('preset')
         preset_path = os.path.join(app.config['PRESETS_FOLDER'], f"{preset_name}.json")
         if os.path.exists(preset_path):
             with open(preset_path, 'r', encoding='utf-8') as f:
                 preset_data = json.load(f)
-            success = utils.modify_exif(input_path, output_path, preset_data=preset_data, convert_to_jpg=convert_to_jpg, add_noise=add_noise, noise_intensity=noise_intensity)
+            # Pass deep_clean from data
+            deep_clean = data.get('deep_clean', False)
+            success = utils.modify_exif(input_path, output_path, preset_data=preset_data, convert_to_jpg=convert_to_jpg, add_noise=add_noise, noise_intensity=noise_intensity, deep_clean=deep_clean)
         else:
             return jsonify({'error': 'Preset not found'}), 404
             
     elif action == 'import_custom':
         custom_data = data.get('custom_data')
         if custom_data:
-            success = utils.modify_exif(input_path, output_path, preset_data=custom_data, convert_to_jpg=convert_to_jpg, add_noise=add_noise, noise_intensity=noise_intensity)
+            deep_clean = data.get('deep_clean', False)
+            success = utils.modify_exif(input_path, output_path, preset_data=custom_data, convert_to_jpg=convert_to_jpg, add_noise=add_noise, noise_intensity=noise_intensity, deep_clean=deep_clean)
         else:
             return jsonify({'error': 'No custom data provided'}), 400
             
@@ -225,6 +233,34 @@ def download_file(file_id):
         return send_from_directory(processed_dir, target_file, as_attachment=True)
     return jsonify({'error': 'File not found'}), 404
 
+@app.route('/view/upload/<file_id>', methods=['GET'])
+def view_upload(file_id):
+    upload_dir = app.config['UPLOAD_FOLDER']
+    files = os.listdir(upload_dir)
+    target_file = None
+    for f in files:
+        if f.startswith(file_id) and not f.endswith('_thumb'):
+            target_file = f
+            break
+            
+    if target_file:
+        return send_from_directory(upload_dir, target_file)
+    return jsonify({'error': 'File not found'}), 404
+
+@app.route('/view/output/<file_id>', methods=['GET'])
+def view_output(file_id):
+    processed_dir = app.config['PROCESSED_FOLDER']
+    files = os.listdir(processed_dir)
+    target_file = None
+    for f in files:
+        if f.startswith(file_id) and not f.endswith('.zip'):
+            target_file = f
+            break
+            
+    if target_file:
+        return send_from_directory(processed_dir, target_file)
+    return jsonify({'error': 'File not found'}), 404
+
 @app.route('/download_batch', methods=['POST', 'OPTIONS'])
 def download_batch():
     if request.method == 'OPTIONS':
@@ -255,7 +291,7 @@ def download_batch():
     
     return send_file(zip_path, as_attachment=True)
 
-@app.route('/static/thumbnails/<path:filename>')
+@app.route('/thumbnails/<path:filename>')
 def serve_thumbnails(filename):
     return send_from_directory(app.config['THUMBNAIL_FOLDER'], filename)
 

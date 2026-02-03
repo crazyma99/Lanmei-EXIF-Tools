@@ -1,4 +1,6 @@
-import type React from "react";
+'use client';
+
+import React, { useState } from "react";
 import { FileData } from "../app/types";
 
 interface FileCardProps {
@@ -10,7 +12,8 @@ interface FileCardProps {
 
 export default function FileCard({ file, isProcessed = false, isSelected = false, onToggleSelect }: FileCardProps) {
   const apiBase = (typeof window !== 'undefined' && (window as any).env?.API_BASE) || process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:5000';
-  const [showModal, setShowModal] = (typeof window !== 'undefined') ? (require('react').useState as typeof import('react').useState<boolean>)(false) : [false, () => {}];
+  const [showModal, setShowModal] = useState(false);
+  
   const formatValue = (val: unknown): string => {
     if (val === null || val === undefined) return '';
     if (typeof val === 'string') return val;
@@ -158,88 +161,105 @@ export default function FileCard({ file, isProcessed = false, isSelected = false
       {showModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center" onClick={() => setShowModal(false)}>
           <div className="absolute inset-0 bg-black/50"></div>
-          <div className="relative bg-card rounded-xl shadow-xl w-[90vw] max-w-[900px] max-h-[80vh] overflow-hidden border border-border" onClick={(e) => e.stopPropagation()}>
-            <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+          <div className="relative bg-card rounded-xl shadow-xl w-[95vw] max-w-[1200px] h-[90vh] overflow-hidden border border-border flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="px-4 py-3 border-b border-border flex items-center justify-between shrink-0">
               <div className="text-sm font-semibold text-foreground">
                 {file.filename} {file.format ? `· ${file.format}` : ''} {file.width && file.height ? `· ${file.width}×${file.height}` : ''}
               </div>
               <button className="text-xs px-2 py-1 rounded bg-muted hover:bg-muted/80" onClick={() => setShowModal(false)}>关闭</button>
             </div>
-            <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <div className="text-xs font-semibold text-foreground">基本信息</div>
-                <div className="text-xs text-muted-foreground">文件名: {file.filename}</div>
-                {file.format && <div className="text-xs text-muted-foreground">格式: {file.format}</div>}
-                {file.width && file.height && <div className="text-xs text-muted-foreground">分辨率: {file.width} × {file.height}</div>}
-                {typeof file.aigc === 'boolean' && (
-                  <div className="text-xs text-muted-foreground">AIGC: {file.aigc ? `是${file.aigc_detail?.source ? `（${file.aigc_detail.source}）` : ''}` : '否'}</div>
-                )}
-                {isProcessed && (
-                  <a 
-                    href={`${apiBase}/download/${file.id}`} 
-                    download
-                    className="inline-block text-xs bg-primary hover:bg-primary/90 text-primary-foreground px-3 py-1.5 rounded transition-colors"
-                  >
-                    下载此图片
-                  </a>
-                )}
+            <div className="flex-1 p-4 grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 min-h-0">
+              <div className="bg-muted/30 rounded-lg border border-border flex items-center justify-center h-full w-full overflow-hidden relative">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img 
+                  src={`${apiBase}/view/${isProcessed ? 'output' : 'upload'}/${file.id}`}
+                  alt={file.filename}
+                  className="max-w-full max-h-full object-contain"
+                />
               </div>
-              <div className="space-y-2 overflow-y-auto max-h-[55vh]">
-                <div className="text-xs font-semibold text-foreground">全部元数据</div>
-                <div className="space-y-1">
-                  {(() => {
-                    const flat: Record<string, unknown> = {};
-                    if (file.exif && typeof file.exif === 'object') {
-                      for (const ifd in file.exif) {
-                        const v = (file.exif as Record<string, unknown>)[ifd];
-                        if (v && typeof v === 'object') {
-                          const obj = v as Record<string, unknown>;
-                          for (const key in obj) {
-                            if (flat[key] === undefined) flat[key] = obj[key];
+              <div className="flex flex-col h-full min-h-0 gap-4">
+                <div className="space-y-2 shrink-0">
+                  <div className="text-xs font-semibold text-foreground border-b border-border pb-2">基本信息</div>
+                  <div className="space-y-1">
+                    <div className="text-xs text-muted-foreground break-all"><span className="font-medium text-foreground">文件名:</span> {file.filename}</div>
+                    {file.format && <div className="text-xs text-muted-foreground"><span className="font-medium text-foreground">格式:</span> {file.format}</div>}
+                    {file.width && file.height && <div className="text-xs text-muted-foreground"><span className="font-medium text-foreground">分辨率:</span> {file.width} × {file.height}</div>}
+                    {typeof file.aigc === 'boolean' && (
+                      <div className="text-xs text-muted-foreground"><span className="font-medium text-foreground">AIGC:</span> {file.aigc ? `是${file.aigc_detail?.source ? `（${file.aigc_detail.source}）` : ''}` : '否'}</div>
+                    )}
+                  </div>
+                  {isProcessed && (
+                    <div className="pt-2">
+                      <a 
+                        href={`${apiBase}/download/${file.id}`} 
+                        download
+                        className="w-full block text-center text-xs bg-primary hover:bg-primary/90 text-primary-foreground px-3 py-2 rounded transition-colors"
+                      >
+                        下载此图片
+                      </a>
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 min-h-0 flex flex-col">
+                  <div className="text-xs font-semibold text-foreground border-b border-border pb-2 mb-2">全部元数据</div>
+                  <div className="overflow-y-auto custom-scrollbar space-y-1 flex-1">
+                    {(() => {
+                      const flat: Record<string, unknown> = {};
+                      if (file.exif && typeof file.exif === 'object') {
+                        for (const ifd in file.exif) {
+                          const v = (file.exif as Record<string, unknown>)[ifd];
+                          if (v && typeof v === 'object') {
+                            const obj = v as Record<string, unknown>;
+                            for (const key in obj) {
+                              if (flat[key] === undefined) flat[key] = obj[key];
+                            }
                           }
                         }
                       }
-                    }
-                    const entries = Object.entries(flat);
-                    if (entries.length === 0) return <div className="text-xs text-muted-foreground">无元数据信息</div>;
-                    return entries.sort(([a],[b]) => a.localeCompare(b)).map(([k,v]) => (
-                      <div key={k} className="text-[11px] text-muted-foreground">
-                        <span className="font-semibold text-foreground">{k}:</span> {formatValue(v)}
-                      </div>
-                    ));
-                  })()}
-                  {(() => {
-                    const pngInfo = (file.exif && (file.exif as Record<string, unknown>)['PNG Info']) as Record<string, unknown> | undefined;
-                    const xmpInfo = (file.exif && (file.exif as Record<string, unknown>)['XMP']) as Record<string, unknown> | undefined;
-                    const items: React.ReactNode[] = [];
-                    const pickKeys = ['parameters', 'prompt', 'workflow', 'sd-metadata', 'Comment', 'Description', 'Software'];
-                    if (pngInfo && typeof pngInfo === 'object') {
-                      pickKeys.forEach(k => {
-                        const v = (pngInfo as Record<string, unknown>)[k];
-                        if (v !== undefined) {
-                          items.push(
-                            <div key={`m-png-${k}`} className="text-[11px] text-primary">
-                              <span className="font-semibold">PNG {k}:</span> {formatValue(v)}
-                            </div>
-                          );
-                        }
-                      });
-                    }
-                    if (xmpInfo && typeof xmpInfo === 'object' && Object.keys(xmpInfo).length > 0) {
-                      items.push(
-                        <div key="m-xmp" className="text-[11px] text-primary">
-                          <span className="font-semibold">XMP:</span> {formatValue(xmpInfo)}
+                      const entries = Object.entries(flat);
+                      const metadataList = entries.length > 0 ? entries.sort(([a],[b]) => a.localeCompare(b)).map(([k,v]) => (
+                        <div key={k} className="text-[11px] text-muted-foreground break-words">
+                          <span className="font-semibold text-foreground">{k}:</span> {formatValue(v)}
                         </div>
+                      )) : <div className="text-xs text-muted-foreground">无元数据信息</div>;
+
+                      const pngInfo = (file.exif && (file.exif as Record<string, unknown>)['PNG Info']) as Record<string, unknown> | undefined;
+                      const xmpInfo = (file.exif && (file.exif as Record<string, unknown>)['XMP']) as Record<string, unknown> | undefined;
+                      const aigcItems: React.ReactNode[] = [];
+                      const pickKeys = ['parameters', 'prompt', 'workflow', 'sd-metadata', 'Comment', 'Description', 'Software'];
+                      if (pngInfo && typeof pngInfo === 'object') {
+                        pickKeys.forEach(k => {
+                          const v = (pngInfo as Record<string, unknown>)[k];
+                          if (v !== undefined) {
+                            aigcItems.push(
+                              <div key={`m-png-${k}`} className="text-[11px] text-primary break-words">
+                                <span className="font-semibold">PNG {k}:</span> {formatValue(v)}
+                              </div>
+                            );
+                          }
+                        });
+                      }
+                      if (xmpInfo && typeof xmpInfo === 'object' && Object.keys(xmpInfo).length > 0) {
+                        aigcItems.push(
+                          <div key="m-xmp" className="text-[11px] text-primary break-words">
+                            <span className="font-semibold">XMP:</span> {formatValue(xmpInfo)}
+                          </div>
+                        );
+                      }
+                      
+                      return (
+                        <>
+                          {metadataList}
+                          {aigcItems.length > 0 && (
+                            <div className="pt-2 border-t border-border mt-2 space-y-1">
+                              <div className="text-xs font-semibold text-foreground">AIGC 元数据</div>
+                              {aigcItems}
+                            </div>
+                          )}
+                        </>
                       );
-                    }
-                    if (items.length === 0) return null;
-                    return (
-                      <div className="pt-2 border-t border-border space-y-1">
-                        <div className="text-xs font-semibold text-foreground">AIGC 元数据</div>
-                        {items}
-                      </div>
-                    );
-                  })()}
+                    })()}
+                  </div>
                 </div>
               </div>
             </div>

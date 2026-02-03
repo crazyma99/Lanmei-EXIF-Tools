@@ -2,7 +2,8 @@ import os
 import json
 import shutil
 import piexif
-from PIL import Image, ImageChops
+import random
+from PIL import Image, ImageChops, ImageEnhance
 from PIL.PngImagePlugin import PngInfo
 
 __all__ = [
@@ -12,20 +13,123 @@ __all__ = [
     "create_thumbnail",
     "detect_aigc_from_exif",
     "strip_aigc_metadata",
-    "add_grain"
+    "add_grain",
+    "deep_clean_image"
 ]
+
+def _apply_deep_clean(img, intensity=0.0):
+    """
+    Internal helper to apply deep clean transformations to a PIL Image.
+    Returns the processed PIL Image.
+    """
+    # Handle RGBA to RGB conversion if needed for JPG saving later
+    # Or just keep original mode if possible, but convert to RGB/RGBA to be safe
+    if img.mode in ('P', '1', 'LA'):
+        img = img.convert('RGBA')
+    
+    # Force copy to break link with original file info
+    img = img.copy()
+    w_orig, h_orig = img.size
+
+    # 1. Micro-Rotation (random angle between -0.25 and 0.25)
+    angle = random.uniform(-0.25, 0.25)
+    img = img.rotate(angle, resample=Image.Resampling.BICUBIC, expand=True)
+    
+    # Center crop back
+    w_rot, h_rot = img.size
+    crop_w = int(w_orig * 0.99)
+    crop_h = int(h_orig * 0.99)
+    left = (w_rot - crop_w) // 2
+    top = (h_rot - crop_h) // 2
+    img = img.crop((left, top, left + crop_w, top + crop_h))
+
+    # 2. Slight Resample (99.8%)
+    w_curr, h_curr = img.size
+    new_w = int(w_curr * 0.998)
+    new_h = int(h_curr * 0.998)
+    img = img.resize((new_w, new_h), Image.Resampling.LANCZOS)
+    
+    # 3. 1-pixel Shift (Crop)
+    w_curr, h_curr = img.size
+    if w_curr > 4 and h_curr > 4:
+        img = img.crop((1, 1, w_curr, h_curr))
+    
+    # 4. Color Jitter
+    enhancer = ImageEnhance.Brightness(img)
+    factor = random.uniform(0.99, 1.01)
+    img = enhancer.enhance(factor)
+    
+    enhancer = ImageEnhance.Contrast(img)
+    factor = random.uniform(0.99, 1.01)
+    img = enhancer.enhance(factor)
+    
+    # 5. Add Grain/Noise
+    applied_intensity = max(0.1, intensity)
+    img = add_grain(img, applied_intensity)
+    
+    return img
+
+def deep_clean_image(image_path, output_path, intensity=0.0):
+    """
+    Apply deep cleaning techniques to remove AIGC traces:
+    1. Strip all metadata.
+    2. Micro-Rotation (±0.25 deg).
+    3. Slight resampling (99.8%).
+    4. 1-pixel crop (shift).
+    5. Color Jitter (Brightness/Contrast ±1%).
+    6. Imperceptible noise (dithering).
+    """
+    try:
+        # Ensure output directory exists
+        if os.path.dirname(output_path):
+            os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
+        with Image.open(image_path) as img:
+            processed_img = _apply_deep_clean(img, intensity)
+            
+            # Save
+            ext = os.path.splitext(output_path)[1].lower()
+            
+            if ext in ['.jpg', '.jpeg']:
+                if processed_img.mode == 'RGBA':
+                    processed_img = processed_img.convert('RGB')
+                processed_img.save(output_path, format='JPEG', quality=98, subsampling=0)
+            elif ext in ['.png']:
+                processed_img.save(output_path, format='PNG', optimize=True)
+            elif ext in ['.webp']:
+                processed_img.save(output_path, format='WEBP', quality=100)
+            else:
+                processed_img.save(output_path)
+                
+        return True
+    except Exception as e:
+        print(f"Deep clean failed: {e}")
+        return False
 
 def add_grain(image, intensity=0.1):
     """
-    Add film grain/noise to image.
+    Add film grain/noise to image with adaptive scaling for high-res images.
     intensity: 0.0 to 100.0
     """
     if intensity <= 0:
         return image
     
-    # Scale intensity (1-100) to sigma (approx 0.5 - 20)
-    # Adjust multiplier based on visual preference
+    # Scale intensity (1-100) to sigma
     sigma = max(0.5, intensity * 0.2) 
+    
+    # Adaptive grain size scaling
+    # Base resolution (long edge) where grain is 1:1 pixel
+    BASE_RES = 1600 
+    w, h = image.size
+    long_edge = max(w, h)
+    
+    # Calculate scale factor. 
+    # For a 6000px image, scale will be ~3.75, meaning grain is ~3-4 pixels wide.
+    scale_factor = max(1.0, long_edge / BASE_RES)
+    
+    # Generate noise at smaller resolution
+    noise_w = int(w / scale_factor)
+    noise_h = int(h / scale_factor)
     
     try:
         if image.mode == 'RGB':
@@ -33,14 +137,21 @@ def add_grain(image, intensity=0.1):
             ycbcr = image.convert('YCbCr')
             y, cb, cr = ycbcr.split()
             
-            noise_y = Image.effect_noise(y.size, sigma)
+            # Generate noise at lower res
+            noise_small = Image.effect_noise((noise_w, noise_h), sigma)
+            
+            # Scale noise up to match image size
+            # BILINEAR gives a good balance between blocky and blurry for grain
+            noise_y = noise_small.resize((w, h), Image.Resampling.BILINEAR)
+            
             y_with_noise = ImageChops.overlay(y, noise_y)
             
             merged = Image.merge('YCbCr', (y_with_noise, cb, cr))
             return merged.convert('RGB')
         
         elif image.mode == 'L':
-             noise = Image.effect_noise(image.size, sigma)
+             noise_small = Image.effect_noise((noise_w, noise_h), sigma)
+             noise = noise_small.resize((w, h), Image.Resampling.BILINEAR)
              return ImageChops.overlay(image, noise)
              
         elif image.mode == 'RGBA':
@@ -206,10 +317,10 @@ def remove_exif(image_path, output_path, add_noise=False, noise_intensity=0):
         print(f"Error removing EXIF: {e}")
         return False
 
-def modify_exif(image_path, output_path, exif_json_path=None, preset_data=None, convert_to_jpg=False, add_noise=False, noise_intensity=0):
+def modify_exif(image_path, output_path, exif_json_path=None, preset_data=None, convert_to_jpg=False, add_noise=False, noise_intensity=0, deep_clean=False):
     """
     Modifies EXIF data of an image using a JSON file or preset data.
-    Attempts to be lossless for JPEG unless convert_to_jpg is True or add_noise is True.
+    Attempts to be lossless for JPEG unless convert_to_jpg is True or add_noise/deep_clean is True.
     """
     try:
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
@@ -276,7 +387,7 @@ def modify_exif(image_path, output_path, exif_json_path=None, preset_data=None, 
         
         # Check format
         is_jpeg = False
-        if not convert_to_jpg and not add_noise:
+        if not convert_to_jpg and not add_noise and not deep_clean:
             try:
                 with Image.open(image_path) as img:
                     if img.format == 'JPEG':
@@ -284,17 +395,22 @@ def modify_exif(image_path, output_path, exif_json_path=None, preset_data=None, 
             except:
                 pass
 
-        if convert_to_jpg or add_noise:
+        if convert_to_jpg or add_noise or deep_clean:
              with Image.open(image_path) as img:
                 processed_img = img
-                if add_noise:
+                if deep_clean:
+                    # Deep clean includes noise if configured in the helper, 
+                    # but we can pass noise_intensity
+                    processed_img = _apply_deep_clean(img, noise_intensity)
+                elif add_noise:
                     processed_img = add_grain(img, noise_intensity)
                 
                 if convert_to_jpg:
-                    rgb_im = processed_img.convert('RGB')
-                    rgb_im.save(output_path, "JPEG", exif=exif_bytes, quality=95)
+                    if processed_img.mode != "RGB":
+                         processed_img = processed_img.convert("RGB")
+                    processed_img.save(output_path, "JPEG", exif=exif_bytes, quality=95)
                 else:
-                    # add_noise is True but convert_to_jpg is False
+                    # add_noise/deep_clean is True but convert_to_jpg is False
                     # We must save in original format (or close to it) but with new pixels
                     fmt = (img.format or "JPEG").upper()
                     if fmt == "JPEG":
