@@ -4,17 +4,53 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FileData } from './types';
 import FileCard from '@/components/FileCard';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { Slider } from '@/components/ui/slider';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { 
+  UploadIcon, 
+  TrashIcon, 
+  DownloadIcon, 
+  MagicWandIcon, 
+  EraserIcon, 
+  ImageIcon, 
+  FileTextIcon,
+  MixerHorizontalIcon
+} from '@radix-ui/react-icons';
 
 export default function Home() {
   const [uploadedFiles, setUploadedFiles] = useState<FileData[]>([]);
   const [processedFiles, setProcessedFiles] = useState<FileData[]>([]);
   const [isDragging, setIsDragging] = useState(false);
-  const [showCustomJson, setShowCustomJson] = useState(false);
-  const [customJsonText, setCustomJsonText] = useState('');
   const [convertToJpg, setConvertToJpg] = useState(false);
   const [clearAIGC, setClearAIGC] = useState(false);
+  const [addNoise, setAddNoise] = useState(false);
+  const [noiseIntensity, setNoiseIntensity] = useState(10);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [selectedPreset, setSelectedPreset] = useState<string>('sony_a7m4');
   const apiBase = (typeof window !== 'undefined' && (window as any).env?.API_BASE) || process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:5000';
+
+  const defaultJsonExample = `{
+  "0th": {
+    "Make": "Camera Maker",
+    "Model": "Camera Model"
+  },
+  "Exif": {
+    "FNumber": [28, 10],
+    "ISOSpeedRatings": 100
+  }
+}`;
+
+  const [customJsonText, setCustomJsonText] = useState(defaultJsonExample);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -80,6 +116,8 @@ export default function Home() {
           action: action,
           convert_to_jpg: convertToJpg,
           clear_aigc: clearAIGC,
+          add_noise: addNoise,
+          noise_intensity: noiseIntensity,
           ...extraData
         })
       })
@@ -115,14 +153,17 @@ export default function Home() {
     }
   };
 
-  const handleCustomApply = () => {
-    try {
-      const jsonData = JSON.parse(customJsonText);
-      processAll('import_custom', { custom_data: jsonData });
-      setShowCustomJson(false);
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : String(e);
-      alert('JSON 格式错误: ' + msg);
+  const handleApplyPreset = () => {
+    if (selectedPreset === 'custom') {
+      try {
+        const jsonData = JSON.parse(customJsonText);
+        processAll('import_custom', { custom_data: jsonData });
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        alert('JSON 格式错误: ' + msg);
+      }
+    } else {
+      processAll('import_preset', { preset: selectedPreset });
     }
   };
 
@@ -167,9 +208,12 @@ export default function Home() {
   
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-neutral-950 flex flex-col font-sans text-slate-800 dark:text-slate-200 transition-colors duration-300">
-      <header className="bg-white dark:bg-neutral-900 border-b border-gray-200 dark:border-neutral-800 px-8 py-4 sticky top-0 z-10 shadow-sm flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-blue-600 dark:text-blue-500">蓝梅EXIF信息格式化工具</h1>
+    <div className="min-h-screen bg-background flex flex-col font-sans text-foreground transition-colors duration-300">
+      <header className="bg-card border-b border-border px-8 py-4 sticky top-0 z-10 shadow-sm flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-primary flex items-center gap-2">
+          <ImageIcon className="w-6 h-6" />
+          蓝梅EXIF信息格式化工具
+        </h1>
       </header>
 
       <motion.main 
@@ -179,79 +223,105 @@ export default function Home() {
         className="flex-1 p-6 max-w-[1600px] mx-auto w-full flex flex-col gap-6"
       >
         {/* Controls Section */}
-        <div className="bg-white dark:bg-neutral-900 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-neutral-800">
+        <div className="bg-card p-6 rounded-xl shadow-sm border border-border">
+          <div className="flex items-center gap-2 mb-4 text-lg font-semibold text-foreground border-b border-border pb-2">
+            <MixerHorizontalIcon className="w-5 h-5" />
+            处理配置
+          </div>
           <div className="flex flex-wrap gap-3 justify-center items-center">
-            <label className="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-neutral-800 rounded-lg border border-gray-200 dark:border-neutral-700 cursor-pointer select-none transition-colors hover:bg-gray-100 dark:hover:bg-neutral-700">
-              <input 
-                type="checkbox" 
+            <div className="flex items-center space-x-2 px-3 py-2 bg-secondary/50 rounded-lg border border-border">
+              <Checkbox 
+                id="convert-jpg" 
                 checked={convertToJpg}
-                onChange={(e) => setConvertToJpg(e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                onCheckedChange={(checked) => setConvertToJpg(checked as boolean)}
               />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">转为JPG格式</span>
-            </label>
-            <label className="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-neutral-800 rounded-lg border border-gray-200 dark:border-neutral-700 cursor-pointer select-none transition-colors hover:bg-gray-100 dark:hover:bg-neutral-700">
-              <input 
-                type="checkbox" 
+              <Label htmlFor="convert-jpg">转为JPG格式</Label>
+            </div>
+            
+            <div className="flex items-center space-x-2 px-3 py-2 bg-secondary/50 rounded-lg border border-border">
+              <Checkbox 
+                id="clear-aigc" 
                 checked={clearAIGC}
-                onChange={(e) => setClearAIGC(e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                onCheckedChange={(checked) => setClearAIGC(checked as boolean)}
               />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">清除AIGC标识</span>
-            </label>
-            <div className="h-6 w-px bg-gray-300 dark:bg-neutral-700 mx-1"></div>
-            <button 
+              <Label htmlFor="clear-aigc">清除AIGC标识</Label>
+            </div>
+
+            <div className="flex items-center gap-2 px-3 py-2 bg-secondary/50 rounded-lg border border-border">
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="add-noise" 
+                  checked={addNoise}
+                  onCheckedChange={(checked) => setAddNoise(checked as boolean)}
+                />
+                <Label htmlFor="add-noise">增加颗粒</Label>
+              </div>
+              
+              {addNoise && (
+                <div className="flex items-center gap-3 ml-2 border-l border-border pl-3 w-[180px]">
+                  <Label htmlFor="noise-intensity" className="text-xs text-muted-foreground whitespace-nowrap">
+                    强度: {noiseIntensity}
+                  </Label>
+                  <Slider
+                    id="noise-intensity"
+                    defaultValue={[10]}
+                    max={100}
+                    step={1}
+                    value={[noiseIntensity]}
+                    onValueChange={(value) => setNoiseIntensity(value[0])}
+                    className="w-full"
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="h-6 w-px bg-border mx-1"></div>
+            
+            <Button 
+              variant="destructive"
               onClick={() => processAll('clear')}
-              className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors font-medium shadow-sm active:transform active:scale-95"
             >
+              <EraserIcon className="mr-2 h-4 w-4" />
               清除所有EXIF
-            </button>
-            <button 
-              onClick={() => processAll('import_preset', { preset: 'sony_a7m4' })}
-              className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors font-medium shadow-sm active:transform active:scale-95"
-            >
-              导入 Sony A7M4 预设
-            </button>
-            <button 
-              onClick={() => processAll('import_preset', { preset: 'fuji_xt5' })}
-              className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors font-medium shadow-sm active:transform active:scale-95"
-            >
-              导入 Fuji X-T5 预设
-            </button>
-            <button 
-              onClick={() => processAll('import_preset', { preset: 'hasselblad_x2d' })}
-              className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors font-medium shadow-sm active:transform active:scale-95"
-            >
-              导入 Hasselblad X2D 预设
-            </button>
-            <button 
-              onClick={() => setShowCustomJson(!showCustomJson)}
-              className="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg transition-colors font-medium shadow-sm active:transform active:scale-95"
-            >
-              导入自定义 JSON
-            </button>
+            </Button>
+            
+            <div className="flex items-center gap-2">
+              <Select value={selectedPreset} onValueChange={setSelectedPreset}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="选择预设" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="sony_a7m4">Sony A7M4 预设</SelectItem>
+                  <SelectItem value="fuji_xt5">Fuji X-T5 预设</SelectItem>
+                  <SelectItem value="hasselblad_x2d">Hasselblad X2D 预设</SelectItem>
+                  <SelectItem value="custom">自定义 JSON</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Button 
+                variant="default"
+                onClick={handleApplyPreset}
+              >
+                <MagicWandIcon className="mr-2 h-4 w-4" />
+                应用预设
+              </Button>
+            </div>
           </div>
 
-          {showCustomJson && (
+          {selectedPreset === 'custom' && (
             <motion.div 
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="mt-4 p-4 border border-gray-200 dark:border-neutral-700 rounded-lg bg-gray-50 dark:bg-neutral-800"
+              className="mt-4 p-4 border border-border rounded-lg bg-secondary/30"
             >
-              <textarea
+              <Textarea
                 value={customJsonText}
                 onChange={(e) => setCustomJsonText(e.target.value)}
-                rows={5}
-                className="w-full p-3 border border-gray-300 dark:border-neutral-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow font-mono text-sm bg-white dark:bg-neutral-900 dark:text-gray-200"
+                rows={10}
+                className="font-mono text-sm bg-background"
                 placeholder="在此粘贴 JSON 配置..."
               />
-              <button 
-                onClick={handleCustomApply}
-                className="mt-3 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium"
-              >
-                应用自定义配置
-              </button>
             </motion.div>
           )}
         </div>
@@ -259,30 +329,37 @@ export default function Home() {
         {/* Workspace */}
         <div className="flex flex-col lg:flex-row gap-6 flex-1 min-h-[600px]">
           {/* Upload Column */}
-          <div className="flex-1 bg-white dark:bg-neutral-900 rounded-xl shadow-sm border border-gray-100 dark:border-neutral-800 p-6 flex flex-col min-w-0">
-            <div className="flex justify-between items-center mb-6 pb-2 border-b border-gray-100 dark:border-neutral-800">
-              <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">待处理图片</h2>
-              <button 
+          <div className="flex-1 bg-card rounded-xl shadow-sm border border-border p-6 flex flex-col min-w-0">
+            <div className="flex justify-between items-center mb-6 pb-2 border-b border-border">
+              <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                <ImageIcon className="w-5 h-5" />
+                待处理图片
+              </h2>
+              <Button 
+                variant="outline"
+                size="sm"
                 onClick={() => setUploadedFiles([])}
-                className="text-sm px-3 py-1.5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-neutral-800 rounded-md transition-colors border border-gray-200 dark:border-neutral-700"
               >
+                <TrashIcon className="mr-2 h-4 w-4" />
                 清空列表
-              </button>
+              </Button>
             </div>
 
             <div 
               id="drop-zone"
               className={`
                 mb-6 border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-200
-                ${isDragging ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 scale-[1.02]' : 'border-gray-300 dark:border-neutral-700 hover:border-blue-400 hover:bg-gray-50 dark:hover:bg-neutral-800'}
+                ${isDragging ? 'border-primary bg-primary/10 scale-[1.02]' : 'border-border hover:border-primary/50 hover:bg-secondary/50'}
               `}
               onClick={() => document.getElementById('file-input')?.click()}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
             >
-              <div className="text-4xl mb-3">📁</div>
-              <p className="text-gray-500 dark:text-gray-400 font-medium">点击或拖拽照片到此处上传</p>
+              <div className="flex justify-center mb-3">
+                <UploadIcon className="w-10 h-10 text-muted-foreground" />
+              </div>
+              <p className="text-muted-foreground font-medium">点击或拖拽照片到此处上传</p>
               <input 
                 type="file" 
                 id="file-input" 
@@ -309,7 +386,8 @@ export default function Home() {
                 ))}
               </AnimatePresence>
               {uploadedFiles.length === 0 && (
-                <div className="col-span-full text-center py-10 text-gray-400 dark:text-gray-600 text-sm">
+                <div className="col-span-full text-center py-10 text-muted-foreground text-sm flex flex-col items-center gap-2">
+                  <ImageIcon className="w-8 h-8 opacity-20" />
                   暂无上传图片
                 </div>
               )}
@@ -317,22 +395,29 @@ export default function Home() {
           </div>
 
           {/* Result Column */}
-          <div className="flex-1 bg-white dark:bg-neutral-900 rounded-xl shadow-sm border border-gray-100 dark:border-neutral-800 p-6 flex flex-col min-w-0">
-            <div className="flex justify-between items-center mb-6 pb-2 border-b border-gray-100 dark:border-neutral-800">
-              <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">处理结果</h2>
+          <div className="flex-1 bg-card rounded-xl shadow-sm border border-border p-6 flex flex-col min-w-0">
+            <div className="flex justify-between items-center mb-6 pb-2 border-b border-border">
+              <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                <FileTextIcon className="w-5 h-5" />
+                处理结果
+              </h2>
               <div className="flex gap-2">
-                <button 
+                <Button 
+                  size="sm"
+                  variant="default"
                   onClick={downloadBatch}
-                  className="text-sm px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white rounded-md transition-colors shadow-sm"
                 >
+                  <DownloadIcon className="mr-2 h-4 w-4" />
                   批量下载 ZIP
-                </button>
-                <button 
+                </Button>
+                <Button 
+                  variant="outline"
+                  size="sm"
                   onClick={() => setProcessedFiles([])}
-                  className="text-sm px-3 py-1.5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-neutral-800 rounded-md transition-colors border border-gray-200 dark:border-neutral-700"
                 >
+                  <TrashIcon className="mr-2 h-4 w-4" />
                   清空结果
-                </button>
+                </Button>
               </div>
             </div>
 
@@ -357,7 +442,8 @@ export default function Home() {
                 ))}
               </AnimatePresence>
               {processedFiles.length === 0 && (
-                <div className="col-span-full text-center py-10 text-gray-400 dark:text-gray-600 text-sm">
+                <div className="col-span-full text-center py-10 text-muted-foreground text-sm flex flex-col items-center gap-2">
+                  <FileTextIcon className="w-8 h-8 opacity-20" />
                   暂无处理结果
                 </div>
               )}
@@ -366,7 +452,7 @@ export default function Home() {
         </div>
       </motion.main>
 
-      <footer className="bg-white dark:bg-neutral-900 border-t border-gray-200 dark:border-neutral-800 py-6 text-center text-gray-500 dark:text-gray-400 text-sm">
+      <footer className="bg-card border-t border-border py-6 text-center text-muted-foreground text-sm">
         copyright lanmei studio. | build by CrazyMa
       </footer>
     </div>

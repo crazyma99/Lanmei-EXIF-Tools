@@ -133,6 +133,8 @@ def process_file():
     # Handle convert to jpg
     convert_to_jpg = data.get('convert_to_jpg', False)
     clear_aigc = data.get('clear_aigc', False)
+    add_noise = data.get('add_noise', False)
+    noise_intensity = data.get('noise_intensity', 0)
     
     if convert_to_jpg:
         output_filename = os.path.splitext(target_file)[0] + '.jpg'
@@ -152,7 +154,7 @@ def process_file():
     success = False
     
     if action == 'clear':
-        success = utils.remove_exif(input_path, output_path)
+        success = utils.remove_exif(input_path, output_path, add_noise=add_noise, noise_intensity=noise_intensity)
     
     elif action == 'import_preset':
         preset_name = data.get('preset')
@@ -160,14 +162,14 @@ def process_file():
         if os.path.exists(preset_path):
             with open(preset_path, 'r', encoding='utf-8') as f:
                 preset_data = json.load(f)
-            success = utils.modify_exif(input_path, output_path, preset_data=preset_data, convert_to_jpg=convert_to_jpg)
+            success = utils.modify_exif(input_path, output_path, preset_data=preset_data, convert_to_jpg=convert_to_jpg, add_noise=add_noise, noise_intensity=noise_intensity)
         else:
             return jsonify({'error': 'Preset not found'}), 404
             
     elif action == 'import_custom':
         custom_data = data.get('custom_data')
         if custom_data:
-            success = utils.modify_exif(input_path, output_path, preset_data=custom_data, convert_to_jpg=convert_to_jpg)
+            success = utils.modify_exif(input_path, output_path, preset_data=custom_data, convert_to_jpg=convert_to_jpg, add_noise=add_noise, noise_intensity=noise_intensity)
         else:
             return jsonify({'error': 'No custom data provided'}), 400
             

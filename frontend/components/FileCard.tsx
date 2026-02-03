@@ -44,8 +44,8 @@ export default function FileCard({ file, isProcessed = false, isSelected = false
     const items = displayKeys
       .filter(k => flatExif[k] !== undefined)
       .map(k => (
-        <div key={k} className="text-xs text-gray-600 dark:text-gray-400 truncate">
-          <span className="font-semibold text-gray-700 dark:text-gray-300">{k}:</span> {formatValue(flatExif[k])}
+        <div key={k} className="text-xs text-muted-foreground truncate">
+          <span className="font-semibold text-foreground">{k}:</span> {formatValue(flatExif[k])}
         </div>
       ));
 
@@ -58,7 +58,7 @@ export default function FileCard({ file, isProcessed = false, isSelected = false
         const v = (pngInfo && typeof pngInfo === 'object') ? (pngInfo as Record<string, unknown>)[k] : undefined;
         if (v !== undefined) {
           metaItems.push(
-            <div key={`png-${k}`} className="text-xs text-purple-700 dark:text-purple-300 truncate">
+            <div key={`png-${k}`} className="text-xs text-primary truncate">
               <span className="font-semibold">PNG {k}:</span> {formatValue(v)}
             </div>
           );
@@ -67,21 +67,21 @@ export default function FileCard({ file, isProcessed = false, isSelected = false
       const xmpText = xmpInfo && Object.keys(xmpInfo).length > 0 ? formatValue(xmpInfo) : null;
       if (xmpText) {
         metaItems.push(
-          <div key="xmp" className="text-xs text-indigo-700 dark:text-indigo-300 truncate">
+          <div key="xmp" className="text-xs text-primary truncate">
             <span className="font-semibold">XMP:</span> {xmpText}
           </div>
         );
       }
       if (metaItems.length === 0) return null;
       return (
-        <div className="mt-1 pt-1 border-t border-gray-100 dark:border-neutral-700 space-y-0.5">
-          <div className="text-xs font-semibold text-gray-700 dark:text-gray-300">AIGC 元数据</div>
+        <div className="mt-1 pt-1 border-t border-border space-y-0.5">
+          <div className="text-xs font-semibold text-foreground">AIGC 元数据</div>
           {metaItems}
         </div>
       );
     })();
 
-    if (items.length === 0 && !metaSection) return <div className="text-xs text-gray-500 dark:text-gray-500">EXIF/元数据存在但不包含常用标签</div>;
+    if (items.length === 0 && !metaSection) return <div className="text-xs text-muted-foreground">EXIF/元数据存在但不包含常用标签</div>;
     return (
       <div className="space-y-0.5">
         {items}
@@ -93,15 +93,15 @@ export default function FileCard({ file, isProcessed = false, isSelected = false
   return (
     <div 
       className={`
-        bg-white dark:bg-neutral-800 border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all flex flex-col h-full relative group
-        ${isSelected ? 'border-blue-500 ring-2 ring-blue-500 ring-opacity-50' : 'border-gray-200 dark:border-neutral-700'}
+        bg-card border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all flex flex-col h-full relative group
+        ${isSelected ? 'border-primary ring-2 ring-ring ring-opacity-50' : 'border-border'}
       `}
       onClick={() => setShowModal(true)}
     >
-      <div className="h-32 bg-gray-100 dark:bg-neutral-900 relative">
+      <div className="h-32 bg-muted relative">
         {typeof file.aigc === 'boolean' && (
           <div className={`absolute top-2 right-2 text-[10px] px-2 py-0.5 rounded ${
-            file.aigc ? 'bg-red-500 text-white' : 'bg-green-500 text-white'
+            file.aigc ? 'bg-destructive text-destructive-foreground' : 'bg-emerald-500 text-white'
           }`}>
             {file.aigc ? (file.aigc_detail?.source ? `AIGC-${file.aigc_detail.source}` : 'AIGC') : '非AIGC'}
           </div>
@@ -109,7 +109,7 @@ export default function FileCard({ file, isProcessed = false, isSelected = false
         <button 
           type="button"
           onClick={(e) => { e.stopPropagation(); setShowModal(true); }}
-          className="absolute top-8 right-2 text-[10px] px-2 py-0.5 rounded bg-gray-800/70 text-white hover:bg-gray-700"
+          className="absolute top-8 right-2 text-[10px] px-2 py-0.5 rounded bg-black/70 text-white hover:bg-black/80"
         >
           详情
         </button>
@@ -118,10 +118,10 @@ export default function FileCard({ file, isProcessed = false, isSelected = false
           <div className="absolute top-2 left-2 z-10">
             <div className={`
               w-5 h-5 rounded border shadow-sm flex items-center justify-center transition-colors
-              ${isSelected ? 'bg-blue-500 border-blue-500' : 'bg-white/80 dark:bg-black/50 border-gray-400 hover:border-blue-400'}
+              ${isSelected ? 'bg-primary border-primary' : 'bg-white/80 border-gray-400 hover:border-primary'}
             `} onClick={(e) => { e.stopPropagation(); onToggleSelect(); }}>
               {isSelected && (
-                <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-3.5 h-3.5 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                 </svg>
               )}
@@ -137,19 +137,19 @@ export default function FileCard({ file, isProcessed = false, isSelected = false
         />
       </div>
       <div className="p-3 flex-1 flex flex-col">
-        <div className="font-medium text-sm text-gray-800 dark:text-gray-200 mb-2 truncate" title={file.filename}>
+        <div className="font-medium text-sm text-foreground mb-2 truncate" title={file.filename}>
           {file.filename}
         </div>
-        <div className="bg-gray-50 dark:bg-neutral-900 rounded p-2 flex-1 overflow-y-auto max-h-[100px] custom-scrollbar">
+        <div className="bg-muted/50 rounded p-2 flex-1 overflow-y-auto max-h-[100px] custom-scrollbar">
           {formatExif(file.exif)}
         </div>
       </div>
       {isProcessed && (
-        <div className="p-2 border-t border-gray-100 dark:border-neutral-700 bg-gray-50 dark:bg-neutral-900 flex justify-end" onClick={(e) => e.stopPropagation()}>
+        <div className="p-2 border-t border-border bg-muted/50 flex justify-end" onClick={(e) => e.stopPropagation()}>
           <a 
             href={`${apiBase}/download/${file.id}`} 
             download
-            className="text-xs bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded transition-colors"
+            className="text-xs bg-primary hover:bg-primary/90 text-primary-foreground px-3 py-1.5 rounded transition-colors"
           >
             下载
           </a>
@@ -158,34 +158,34 @@ export default function FileCard({ file, isProcessed = false, isSelected = false
       {showModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center" onClick={() => setShowModal(false)}>
           <div className="absolute inset-0 bg-black/50"></div>
-          <div className="relative bg-white dark:bg-neutral-900 rounded-xl shadow-xl w-[90vw] max-w-[900px] max-h-[80vh] overflow-hidden border border-gray-200 dark:border-neutral-700" onClick={(e) => e.stopPropagation()}>
-            <div className="px-4 py-3 border-b border-gray-200 dark:border-neutral-700 flex items-center justify-between">
-              <div className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+          <div className="relative bg-card rounded-xl shadow-xl w-[90vw] max-w-[900px] max-h-[80vh] overflow-hidden border border-border" onClick={(e) => e.stopPropagation()}>
+            <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+              <div className="text-sm font-semibold text-foreground">
                 {file.filename} {file.format ? `· ${file.format}` : ''} {file.width && file.height ? `· ${file.width}×${file.height}` : ''}
               </div>
-              <button className="text-xs px-2 py-1 rounded bg-gray-100 dark:bg-neutral-800 hover:bg-gray-200 dark:hover:bg-neutral-700" onClick={() => setShowModal(false)}>关闭</button>
+              <button className="text-xs px-2 py-1 rounded bg-muted hover:bg-muted/80" onClick={() => setShowModal(false)}>关闭</button>
             </div>
             <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <div className="text-xs font-semibold text-gray-700 dark:text-gray-300">基本信息</div>
-                <div className="text-xs text-gray-600 dark:text-gray-400">文件名: {file.filename}</div>
-                {file.format && <div className="text-xs text-gray-600 dark:text-gray-400">格式: {file.format}</div>}
-                {file.width && file.height && <div className="text-xs text-gray-600 dark:text-gray-400">分辨率: {file.width} × {file.height}</div>}
+                <div className="text-xs font-semibold text-foreground">基本信息</div>
+                <div className="text-xs text-muted-foreground">文件名: {file.filename}</div>
+                {file.format && <div className="text-xs text-muted-foreground">格式: {file.format}</div>}
+                {file.width && file.height && <div className="text-xs text-muted-foreground">分辨率: {file.width} × {file.height}</div>}
                 {typeof file.aigc === 'boolean' && (
-                  <div className="text-xs text-gray-600 dark:text-gray-400">AIGC: {file.aigc ? `是${file.aigc_detail?.source ? `（${file.aigc_detail.source}）` : ''}` : '否'}</div>
+                  <div className="text-xs text-muted-foreground">AIGC: {file.aigc ? `是${file.aigc_detail?.source ? `（${file.aigc_detail.source}）` : ''}` : '否'}</div>
                 )}
                 {isProcessed && (
                   <a 
                     href={`${apiBase}/download/${file.id}`} 
                     download
-                    className="inline-block text-xs bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded transition-colors"
+                    className="inline-block text-xs bg-primary hover:bg-primary/90 text-primary-foreground px-3 py-1.5 rounded transition-colors"
                   >
                     下载此图片
                   </a>
                 )}
               </div>
               <div className="space-y-2 overflow-y-auto max-h-[55vh]">
-                <div className="text-xs font-semibold text-gray-700 dark:text-gray-300">全部元数据</div>
+                <div className="text-xs font-semibold text-foreground">全部元数据</div>
                 <div className="space-y-1">
                   {(() => {
                     const flat: Record<string, unknown> = {};
@@ -201,10 +201,10 @@ export default function FileCard({ file, isProcessed = false, isSelected = false
                       }
                     }
                     const entries = Object.entries(flat);
-                    if (entries.length === 0) return <div className="text-xs text-gray-500 dark:text-gray-500">无元数据信息</div>;
+                    if (entries.length === 0) return <div className="text-xs text-muted-foreground">无元数据信息</div>;
                     return entries.sort(([a],[b]) => a.localeCompare(b)).map(([k,v]) => (
-                      <div key={k} className="text-[11px] text-gray-600 dark:text-gray-400">
-                        <span className="font-semibold text-gray-700 dark:text-gray-300">{k}:</span> {formatValue(v)}
+                      <div key={k} className="text-[11px] text-muted-foreground">
+                        <span className="font-semibold text-foreground">{k}:</span> {formatValue(v)}
                       </div>
                     ));
                   })()}
@@ -218,7 +218,7 @@ export default function FileCard({ file, isProcessed = false, isSelected = false
                         const v = (pngInfo as Record<string, unknown>)[k];
                         if (v !== undefined) {
                           items.push(
-                            <div key={`m-png-${k}`} className="text-[11px] text-purple-700 dark:text-purple-300">
+                            <div key={`m-png-${k}`} className="text-[11px] text-primary">
                               <span className="font-semibold">PNG {k}:</span> {formatValue(v)}
                             </div>
                           );
@@ -227,15 +227,15 @@ export default function FileCard({ file, isProcessed = false, isSelected = false
                     }
                     if (xmpInfo && typeof xmpInfo === 'object' && Object.keys(xmpInfo).length > 0) {
                       items.push(
-                        <div key="m-xmp" className="text-[11px] text-indigo-700 dark:text-indigo-300">
+                        <div key="m-xmp" className="text-[11px] text-primary">
                           <span className="font-semibold">XMP:</span> {formatValue(xmpInfo)}
                         </div>
                       );
                     }
                     if (items.length === 0) return null;
                     return (
-                      <div className="pt-2 border-t border-gray-100 dark:border-neutral-700 space-y-1">
-                        <div className="text-xs font-semibold text-gray-700 dark:text-gray-300">AIGC 元数据</div>
+                      <div className="pt-2 border-t border-border space-y-1">
+                        <div className="text-xs font-semibold text-foreground">AIGC 元数据</div>
                         {items}
                       </div>
                     );
