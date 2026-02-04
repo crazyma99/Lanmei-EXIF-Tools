@@ -40,7 +40,7 @@ instance/
 uploads/
 outputs/
 processed/
-static/thumbnails/
+static/
 frontend_dist/
 *.log
 *.zip
