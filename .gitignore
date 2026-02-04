@@ -39,6 +39,8 @@ instance/
 # Project Specific
 uploads/
 outputs/
+processed/
+static/thumbnails/
 frontend_dist/
 *.log
 *.zip
