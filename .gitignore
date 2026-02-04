@@ -10,8 +10,6 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
 parts/
 sdist/
 var/
@@ -56,17 +54,21 @@ frontend_dist/
 Thumbs.db
 Desktop.ini
 
-# Frontend (Next.js App)
-frontend/node_modules/
+# Dependencies
+node_modules/
+
+# Frontend (Next.js)
+.next/
+out/
+.vercel/
+*.tsbuildinfo
+next-env.d.ts
+# Explicit frontend build artifacts just in case
 frontend/.next/
 frontend/out/
 frontend/build/
-frontend/.vercel/
-frontend/*.tsbuildinfo
-frontend/next-env.d.ts
 
 # Electron & Build
-node_modules/
 dist_v2/
 dist_old_temp/
 backend_dist/
