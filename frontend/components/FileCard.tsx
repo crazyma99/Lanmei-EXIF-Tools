@@ -11,7 +11,7 @@ interface FileCardProps {
 }
 
 export default function FileCard({ file, isProcessed = false, isSelected = false, onToggleSelect }: FileCardProps) {
-  const apiBase = (typeof window !== 'undefined' && (window as any).env?.API_BASE) || process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:5000';
+  const apiBase = (typeof window !== 'undefined' && (window as any).env?.API_BASE) || process.env.NEXT_PUBLIC_API_BASE || `http://${typeof window !== 'undefined' ? window.location.hostname : 'localhost'}:5000`;
   const [showModal, setShowModal] = useState(false);
   
   const formatValue = (val: unknown): string => {

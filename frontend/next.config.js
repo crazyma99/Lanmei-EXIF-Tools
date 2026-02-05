@@ -10,9 +10,6 @@ const nextConfig = {
     config.resolve.modules.unshift(path.resolve(__dirname, 'node_modules'));
     return config;
   },
-  experimental: {
-    allowedDevOrigins: ['*'],
-  },
 };
 
 module.exports = nextConfig;

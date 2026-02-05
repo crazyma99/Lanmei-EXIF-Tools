@@ -39,7 +39,7 @@ export default function Home() {
   const [noiseIntensity, setNoiseIntensity] = useState(10);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [selectedPreset, setSelectedPreset] = useState<string>('sony_a7m4');
-  const apiBase = (typeof window !== 'undefined' && (window as any).env?.API_BASE) || process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:5000';
+  const apiBase = (typeof window !== 'undefined' && (window as any).env?.API_BASE) || process.env.NEXT_PUBLIC_API_BASE || `http://${typeof window !== 'undefined' ? window.location.hostname : 'localhost'}:5000`;
 
   const defaultJsonExample = `{
   "0th": {

@@ -316,4 +316,4 @@ def serve_ui_assets(filename):
     return send_from_directory(app.config['WEB_FOLDER'], filename)
 
 if __name__ == '__main__':
-    app.run(debug=False, port=args.port)
+    app.run(debug=False, host='0.0.0.0', port=args.port)
