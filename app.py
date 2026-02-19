@@ -309,6 +309,13 @@ def download_batch():
 def serve_thumbnails(filename):
     return send_from_directory(app.config['THUMBNAIL_FOLDER'], filename)
 
+@app.route('/session/cleanup', methods=['POST', 'OPTIONS'])
+def session_cleanup():
+    clean_storage_dirs()
+    if request.method == 'OPTIONS':
+        return jsonify({'ok': True}), 200
+    return jsonify({'success': True})
+
 @app.route('/api')
 def api_root():
     return jsonify({'status': 'online', 'message': 'Exif-Rm-Formater API Server', 'version': '1.0.0'}), 200

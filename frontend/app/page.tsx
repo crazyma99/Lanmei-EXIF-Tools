@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FileData } from './types';
 import FileCard from '@/components/FileCard';
@@ -29,6 +29,12 @@ import {
 } from '@radix-ui/react-icons';
 import GrainPreview from '@/components/GrainPreview';
 
+type WindowWithEnv = Window & {
+  env?: {
+    API_BASE?: string;
+  };
+};
+
 export default function Home() {
   const [uploadedFiles, setUploadedFiles] = useState<FileData[]>([]);
   const [processedFiles, setProcessedFiles] = useState<FileData[]>([]);
@@ -39,7 +45,38 @@ export default function Home() {
   const [noiseIntensity, setNoiseIntensity] = useState(10);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [selectedPreset, setSelectedPreset] = useState<string>('sony_a7m4');
-  const apiBase = (typeof window !== 'undefined' && (window as any).env?.API_BASE) || process.env.NEXT_PUBLIC_API_BASE || `http://${typeof window !== 'undefined' ? window.location.hostname : 'localhost'}:5000`;
+  const apiBaseEnv =
+    typeof window !== 'undefined'
+      ? (window as WindowWithEnv).env?.API_BASE
+      : undefined;
+  const apiBase =
+    apiBaseEnv ||
+    process.env.NEXT_PUBLIC_API_BASE ||
+    `http://${typeof window !== 'undefined' ? window.location.hostname : 'localhost'}:5000`;
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handleUnload = () => {
+      const url = `${apiBase}/session/cleanup`;
+      const data = JSON.stringify({});
+      if (navigator.sendBeacon) {
+        const blob = new Blob([data], { type: 'application/json' });
+        navigator.sendBeacon(url, blob);
+      } else {
+        fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: data,
+          keepalive: true,
+        }).catch(() => {});
+      }
+    };
+
+    window.addEventListener('beforeunload', handleUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleUnload);
+    };
+  }, [apiBase]);
 
   const defaultJsonExample = `{
   "0th": {

@@ -3,6 +3,12 @@
 import React, { useState } from "react";
 import { FileData } from "../app/types";
 
+type WindowWithEnv = Window & {
+  env?: {
+    API_BASE?: string;
+  };
+};
+
 interface FileCardProps {
   file: FileData;
   isProcessed?: boolean;
@@ -11,7 +17,14 @@ interface FileCardProps {
 }
 
 export default function FileCard({ file, isProcessed = false, isSelected = false, onToggleSelect }: FileCardProps) {
-  const apiBase = (typeof window !== 'undefined' && (window as any).env?.API_BASE) || process.env.NEXT_PUBLIC_API_BASE || `http://${typeof window !== 'undefined' ? window.location.hostname : 'localhost'}:5000`;
+  const apiBaseEnv =
+    typeof window !== 'undefined'
+      ? (window as WindowWithEnv).env?.API_BASE
+      : undefined;
+  const apiBase =
+    apiBaseEnv ||
+    process.env.NEXT_PUBLIC_API_BASE ||
+    `http://${typeof window !== 'undefined' ? window.location.hostname : 'localhost'}:5000`;
   const [showModal, setShowModal] = useState(false);
   
   const formatValue = (val: unknown): string => {
