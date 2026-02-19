@@ -4,6 +4,7 @@ import zipfile
 import json
 import sys
 import argparse
+import shutil
 from flask import Flask, render_template, request, jsonify, send_from_directory, send_file
 from werkzeug.utils import secure_filename
 import utils
@@ -29,13 +30,26 @@ app.config['PROCESSED_FOLDER'] = os.path.join(BASE_DIR, 'processed')
 app.config['THUMBNAIL_FOLDER'] = os.path.join(BASE_DIR, 'static', 'thumbnails')
 app.config['PRESETS_FOLDER'] = resource_path('presets')
 app.config['WEB_FOLDER'] = resource_path('web')
-app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB max upload
+app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024
 
-# Ensure directories exist
+def clean_storage_dirs():
+    for folder in [app.config['UPLOAD_FOLDER'], app.config['PROCESSED_FOLDER'], app.config['THUMBNAIL_FOLDER']]:
+        if os.path.isdir(folder):
+            for name in os.listdir(folder):
+                path = os.path.join(folder, name)
+                if os.path.isfile(path):
+                    try:
+                        os.remove(path)
+                    except:
+                        pass
+                elif os.path.isdir(path):
+                    shutil.rmtree(path, ignore_errors=True)
+
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 os.makedirs(app.config['PROCESSED_FOLDER'], exist_ok=True)
 os.makedirs(app.config['THUMBNAIL_FOLDER'], exist_ok=True)
 os.makedirs(app.config['PRESETS_FOLDER'], exist_ok=True)
+clean_storage_dirs()
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'tiff', 'webp'}
 
